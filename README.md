@@ -1,33 +1,43 @@
 # ⌨️ Algorithm Study
 
-| 진행 기간        | 2023년 7월 31일 ~ ing                                                                                                                                                                        |
+| 진행 기간        | 2025년 09월 01일 ~ ing                                                                                                                                                                        |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 스터디 장소      | 미정                                                                                                                |
-| 정기 스터디 시간 | 미정                                                                                                                                                                    |
+| 스터디 장소      | 비대면                                                                                                                |
+| 정기 스터디 시간 | 목요일 20시                                                                                                                                                                    |
 | 플랫폼           | [백준](https://www.acmicpc.net/)                                                                                                                                                             |
-| 언어             | ![Java](https://img.shields.io/badge/Java-3766AB?style=flat-square&logo=Java&logoColor=white) |
+| 언어             | ![Python](https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54) |
 
 ## 🤼 스터디 멤버
 
 <table>
   <tr>
     <td align="center" width="120px">
-      <a href=https://github.com/INSEA-99">
-        <img src="https://avatars.githubusercontent.com/u/61490878?" width="80px"><br/>
-        <sub><b>INSEA-99</b></sub>
+      <a href=https://solved.ac/profile/jaykxo">
+        <sub><b>jaykxo</b></sub>
+      </a>
+      <br/>
+      <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54"/>
+    </td>
+    <td align="center" width="120px">
+      <a href=https://www.acmicpc.net/user/hb128">
+        <sub><b>hb128</b></sub>
       </a>
       <br/>
       <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54"/>
     </td>
     <td align="center" width="120px">
       <a href=https://github.com/INSEA-99">
-        <img src="https://avatars.githubusercontent.com/u/61490878?" width="80px"><br/>
         <sub><b>INSEA-99</b></sub>
       </a>
       <br/>
-      <img src="https://img.shields.io/badge/Java-3766AB?style=flat-square&logo=Java&logoColor=white"/>
       <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54"/>
-      <img src="https://img.shields.io/badge/C++-00599C?style=flat-square&logo=C%2B%2B&logoColor=white"/>
+    </td>
+    <td align="center" width="120px">
+      <a href=https://www.acmicpc.net/user/jw1122h">
+        <sub><b>jw1122h</b></sub>
+      </a>
+      <br/>
+      <img src="https://img.shields.io/badge/Python-3670A0?style=flat-square&logo=python&logoColor=ffdd54"/>
     </td>
   </tr>
 </table>
@@ -36,7 +46,7 @@
 
 |     날짜      | 문제 유형                | 문제                                                                                                                                                                                                                              |                                                                                                                                                                                        난이도                                                                                                                                                                                         |
 | :-----------: | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| 08-29 ~ 09-05 | DP<br />다익스트라<br /> | 1. [자원 캐기](https://www.acmicpc.net/problem/14430)<br />2. [숫자 카드](https://www.acmicpc.net/problem/2591)<br />3. [AMC Craft](https://www.acmicpc.net/problem/1005)<br />4. [전력난](https://www.acmicpc.net/problem/28354) | <img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/9.svg"/><br /><img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/11.svg"/><br /><img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/13.svg"/><br /><img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/16.svg"/> |
+| 09-01 ~ 09-07 | 감잡기 | 1. [Hello World](https://www.acmicpc.net/problem/2557)<br />2. [꼬마 정민](https://www.acmicpc.net/problem/11382)<br />3. [별 찍기 - 1](https://www.acmicpc.net/problem/2438)<br /> | <img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/1.svg"/><br /><img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/1.svg"/><br /><img height="20px" width="25px" src="https://d2gd6pc034wcta.cloudfront.net/tier/1.svg"/> |
 
 <details>
 <summary>지난 문제 보기</summary>
@@ -61,7 +71,7 @@
 
 ```text
 Algorithm
-├── INSER-99
+├── INSEA-99
 │   └── week01
 │       ├── Main1.java
 │       ├── Main2.java
