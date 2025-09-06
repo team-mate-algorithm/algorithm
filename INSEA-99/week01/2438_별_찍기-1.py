@@ -1,4 +1,4 @@
 import sys
 input = sys.stdin.readline
 for i in range(int(input())):
-    print("*"*(i+1))
+    print("*"*(i+1)) 
