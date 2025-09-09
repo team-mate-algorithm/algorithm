@@ -6,7 +6,7 @@ on:
       - main
     types:
       - opened
-      - reopened   # Reopen 이벤트 포함
+      - reopened
   pull_request_review:
     types:
       - submitted
@@ -22,25 +22,26 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const token = process.env.ORG_ACCESS_TOKEN;
-            const octokitAssign = github.getOctokit(token);
-            const org = context.repo.owner;
+            const githubPkg = require('@actions/github');
+            const octokitAssign = new githubPkg.getOctokit(process.env.ORG_ACCESS_TOKEN);
 
+            const org = githubPkg.context.repo.owner;
             let members = [];
             let page = 1;
-            while (true) {
+
+            while(true){
               const { data } = await octokitAssign.rest.orgs.listMembers({
                 org,
                 per_page: 100,
                 page
               });
-              if (data.length === 0) break;
+              if(data.length === 0) break;
               members = members.concat(data.map(u => u.login));
               page++;
             }
 
             // PR 작성자 제외
-            const author = context.payload.pull_request.user.login;
+            const author = githubPkg.context.payload.pull_request.user.login;
             members = members.filter(u => u !== author);
 
             // 랜덤 2명 선택
@@ -49,9 +50,9 @@ jobs:
 
             // 리뷰어 지정
             await octokitAssign.rest.pulls.requestReviewers({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
+              owner: githubPkg.context.repo.owner,
+              repo: githubPkg.context.repo.repo,
+              pull_number: githubPkg.context.payload.pull_request.number,
               reviewers
             });
 
@@ -66,15 +67,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const token = process.env.ORG_ACCESS_TOKEN;
-            const octokitReview = github.getOctokit(token);
-            const pr_number = context.payload.pull_request.number;
+            const githubPkg = require('@actions/github');
+            const octokitReview = new githubPkg.getOctokit(process.env.ORG_ACCESS_TOKEN);
 
+            const pr_number = githubPkg.context.payload.pull_request.number;
             const reviewers = steps.assign.outputs.result.split(",");
 
             const { data: reviews } = await octokitReview.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: githubPkg.context.repo.owner,
+              repo: githubPkg.context.repo.repo,
               pull_number: pr_number
             });
 
@@ -93,14 +94,14 @@ jobs:
             // 누군가 변경 요청 시 PR 자동 Close
             if (Object.values(reviewMap).includes("CHANGES_REQUESTED")) {
               await octokitReview.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: githubPkg.context.repo.owner,
+                repo: githubPkg.context.repo.repo,
                 issue_number: pr_number,
                 body: `⚠️ PR 자동 반려: 지정된 리뷰어 중 누군가 변경 요청을 했습니다.`
               });
               await octokitReview.rest.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: githubPkg.context.repo.owner,
+                repo: githubPkg.context.repo.repo,
                 pull_number: pr_number,
                 state: "closed"
               });
@@ -112,13 +113,14 @@ jobs:
             const allApproved = Object.values(reviewMap).every(s => s === "APPROVED");
             if (allApproved) {
               await octokitReview.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: githubPkg.context.repo.owner,
+                repo: githubPkg.context.repo.repo,
                 pull_number: pr_number
               });
               console.log("PR auto merged.");
             } else {
               console.log("Waiting for all reviewers to approve.");
             }
+
         env:
           ORG_ACCESS_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
