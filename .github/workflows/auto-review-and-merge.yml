@@ -22,12 +22,12 @@ jobs:
           script: |
             const org = context.repo.owner;
             const token = process.env.ORG_ACCESS_TOKEN;
-            const octokit = github.getOctokit(token);
+            const octokit_assign = github.getOctokit(token);
 
             let members = [];
             let page = 1;
             while(true){
-              const { data } = await octokit.rest.orgs.listMembers({
+              const { data } = await octokit_assign.rest.orgs.listMembers({
                 org,
                 per_page: 100,
                 page
@@ -36,18 +36,21 @@ jobs:
               members = members.concat(data.map(u => u.login));
               page++;
             }
+            // PR 작성자 제외
+            const author = context.payload.pull_request.user.login;
+            members = members.filter(u => u !== author);
 
             const shuffled = members.sort(() => 0.5 - Math.random());
             const reviewers = shuffled.slice(0,2);
 
-            await octokit.rest.pulls.requestReviewers({
+            await octokit_assign.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
               reviewers
             });
 
-            return reviewers;
+            return reviewers.join(",");
         env:
           ORG_ACCESS_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
 
@@ -58,8 +61,10 @@ jobs:
           script: |
             const pr_number = context.payload.pull_request.number;
             const reviewers = steps.assign.outputs.result.split(",");
+            const token = process.env.ORG_ACCESS_TOKEN;
+            const octokit_review = github.getOctokit(token);
 
-            const { data: reviews } = await github.rest.pulls.listReviews({
+            const { data: reviews } = await octokit_review.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr_number
@@ -77,13 +82,13 @@ jobs:
 
             // 누군가 변경 요청 시 PR 자동 Close
             if(Object.values(reviewMap).includes("CHANGES_REQUESTED")){
-              await github.rest.issues.createComment({
+              await octokit_review.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pr_number,
                 body: `⚠️ PR 자동 반려: 지정된 리뷰어 중 누군가 변경 요청을 했습니다.`
               });
-              await github.rest.pulls.update({
+              await octokit_review.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pr_number,
@@ -96,7 +101,7 @@ jobs:
             // 모든 리뷰어가 Approve 했으면 자동 Merge
             const allApproved = Object.values(reviewMap).every(s => s === "APPROVED");
             if(allApproved){
-              await github.rest.pulls.merge({
+              await octokit_review.rest.pulls.merge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pr_number
@@ -105,3 +110,5 @@ jobs:
             } else {
               console.log("Waiting for all reviewers to approve.");
             }
+        env:
+          ORG_ACCESS_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
