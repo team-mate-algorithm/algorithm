@@ -2,90 +2,109 @@ name: Auto Assign, Close or Merge PR
 
 on:
   pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - reopened
+    branches: [main]
+    types: [opened, reopened]
   pull_request_review:
-    types:
-      - submitted
+    types: [submitted]
 
 jobs:
-  manage-pr:
+  assign-and-merge:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ PR 열릴 때 랜덤 리뷰어 2명 지정
-      - name: Assign 2 random reviewers
-        id: assign
+      - name: Assign random collaborators as reviewers & save to PR body
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
-            const org = context.repo.owner;
-            let members = [];
+            // 현재 리포의 모든 collaborator 가져오기 (작성자 제외)
+            let collaborators = [];
             let page = 1;
-
-            // 조직 멤버 가져오기
-            while(true){
-              const { data } = await github.rest.orgs.listMembers({
-                org,
+            while (true) {
+              const { data } = await github.rest.repos.listCollaborators({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 per_page: 100,
                 page
               });
-              if(data.length === 0) break;
-              members = members.concat(data.map(u => u.login));
+              if (data.length === 0) break;
+              collaborators = collaborators.concat(data.map(u => u.login));
               page++;
             }
-
-            // PR 작성자 제외
             const author = context.payload.pull_request.user.login;
-            members = members.filter(u => u !== author);
+            collaborators = collaborators.filter(u => u !== author);
 
-            // 랜덤 2명 선택
-            const shuffled = members.sort(() => 0.5 - Math.random());
-            const reviewers = shuffled.slice(0, 2);
+            // 랜덤 2명(또는 남은 만큼) 선정
+            const reviewers = collaborators.sort(() => 0.5 - Math.random()).slice(0, 2);
 
             // 리뷰어 지정
-            await github.rest.pulls.requestReviewers({
+            if (reviewers.length > 0) {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                reviewers: reviewers
+              });
+            }
+
+            // PR 본문에 리뷰어 기록
+            const body = context.payload.pull_request.body || "";
+            const reviewersNote = `<!-- reviewers: ${reviewers.join(',')} -->`;
+            await github.rest.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
-              reviewers: reviewers
+              body: `${body}\n${reviewersNote}`
             });
 
+            console.log("Review candidate collaborators:", collaborators);
             console.log("Assigned reviewers:", reviewers);
-            return reviewers.join(',');
-          github-token: ${{ secrets.ORG_ACCESS_TOKEN }}
 
-      # 2️⃣ 리뷰 제출 감지 후 Close / Merge 처리 (리뷰어 2명 모두 승인해야 merge)
-      - name: Check review and act
+      - name: Auto merge if reviewers all approved (or none assigned)
+        if: github.event_name == 'pull_request_review'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
             const pr_number = context.payload.pull_request.number;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+            const body = pr.body || "";
+            const reviewersMatch = body.match(/<!-- reviewers: ([^>]*)-->/);
+            const reviewers = reviewersMatch && reviewersMatch[1].trim()
+              ? reviewersMatch[1].split(',').map(r => r.trim()).filter(r => r)
+              : [];
 
-            // 여러 명이 할당되어 있으므로 배열로 처리
-            const reviewers = steps.assign.outputs.result.split(',');
+            // 리뷰어가 없으면 자동 머지
+            if (reviewers.length === 0) {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr_number
+              });
+              console.log("No reviewers assigned. PR auto merged.");
+              return;
+            }
 
+            // 각 리뷰어의 마지막 리뷰 상태 확인
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr_number
             });
 
-            // 각 리뷰어의 마지막 리뷰 상태 추적
             const reviewStates = {};
             reviewers.forEach(reviewer => {
-              // 해당 리뷰어의 마지막 리뷰 찾기
               const userReviews = reviews.filter(r => r.user.login === reviewer);
               if (userReviews.length > 0) {
                 reviewStates[reviewer] = userReviews[userReviews.length - 1].state;
               }
             });
 
-            console.log("Review states:", reviewStates);
-
-            // CHANGES_REQUESTED가 하나라도 있으면 PR Close
+            // CHANGES_REQUESTED가 있으면 PR 반려(닫기)
             if (Object.values(reviewStates).includes("CHANGES_REQUESTED")) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -103,15 +122,14 @@ jobs:
               return;
             }
 
-            // 2명 모두 APPROVED면 자동 Merge
-            if (reviewers.every(reviewer => reviewStates[reviewer] === "APPROVED")) {
+            // 모든 리뷰어 APPROVED면 자동 머지
+            if (reviewers.length > 0 && reviewers.every(r => reviewStates[r] === "APPROVED")) {
               await github.rest.pulls.merge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pr_number
               });
-              console.log("PR auto merged.");
+              console.log("All reviewers approved. PR auto merged.");
             } else {
               console.log("Waiting for all reviewers to approve.");
             }
-          github-token: ${{ secrets.ORG_ACCESS_TOKEN }}
