@@ -1,6 +1,17 @@
 # pypy3
 # 시간(ms) : 92
 # 공간(KB) : 109544
+#
+# Python3
+# 시간(ms) : 40
+# 공간(KB) : 32412
+#
+# 공유 : 
+#     빠른 입출력 + 내장 함수 (정렬, math 등)
+#     → Python3 추천
+
+#     루프 많고 연산-heavy (단순 반복, 시뮬레이션)
+#     → PyPy3 추천
 
 import sys
 input = sys.stdin.readline
