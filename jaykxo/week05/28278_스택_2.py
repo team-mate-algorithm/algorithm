@@ -16,18 +16,22 @@ for _ in range(N):
     if op == '1':  # push
         x = int(cmd[1])
         stack.append(x)
+
     elif op == '2':  # pop, 비어있으면 -1
         if not stack:
             result.append('-1')
         else:
             result.append(str(stack.pop()))
+
     elif op == '3':  # 현재 스택 크기
         result.append(str(len(stack)))
+
     elif op == '4':  # 비었으면 1, 아니면 0
         if not stack:
             result.append('1')
         else:
             result.append('0')
+            
     elif op == '5':  # 맨 위 원소, 없으면 -1
         if not stack:
             result.append('-1')
